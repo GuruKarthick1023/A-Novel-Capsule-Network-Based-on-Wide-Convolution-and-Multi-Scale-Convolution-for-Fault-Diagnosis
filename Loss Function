@@ -1,0 +1,17 @@
+class CapsuleLoss(nn.Module):
+    def __init__(self, recon_loss_scale=0.0005):
+        super(CapsuleLoss, self).__init__()
+        self.recon_loss_scale = recon_loss_scale
+        self.mse_loss = nn.MSELoss()
+
+    def forward(self, images, labels, outputs, reconstructions):
+        # Margin loss
+        left = F.relu(0.9 - outputs.norm(dim=-1)) ** 2
+        right = F.relu(outputs.norm(dim=-1) - 0.1) ** 2
+        margin_loss = labels * left + 0.5 * (1.0 - labels) * right
+        margin_loss = margin_loss.sum()
+
+        # Reconstruction loss
+        recon_loss = self.mse_loss(reconstructions, images)
+
+        return margin_loss + self.recon_loss_scale * recon_loss
