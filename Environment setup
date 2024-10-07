@@ -1,0 +1,5 @@
+python -m venv capsule_env
+source capsule_env/bin/activate  # On Windows: capsule_env\Scripts\activate
+
+
+pip install torch torchvision numpy matplotlib scikit-learn
