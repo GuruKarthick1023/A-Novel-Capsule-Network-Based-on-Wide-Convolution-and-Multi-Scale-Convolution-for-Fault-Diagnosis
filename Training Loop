@@ -1,0 +1,25 @@
+import torch.optim as optim
+
+# Initialize model, loss, optimizer
+model = WideMultiScaleCapsuleNet(num_classes=number_of_classes).to(device)
+criterion = CapsuleLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Training Function
+def train(model, loader, optimizer, criterion, epoch):
+    model.train()
+    total_loss = 0
+    for batch_idx, (data, target) in enumerate(loader):
+        data, target = data.to(device), target.to(device)
+        one_hot = torch.eye(number_of_classes).to(device).index_select(dim=0, index=target)
+        
+        optimizer.zero_grad()
+        output, recon = model(data, one_hot)
+        loss = criterion(data, one_hot, output, recon)
+        loss.backward()
+        optimizer.step()
+        
+        total_loss += loss.item()
+        if batch_idx % 10 == 0:
+            print(f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(loader.dataset)}] \tLoss: {loss.item():.6f}")
+    print(f"====> Epoch: {epoch} Average loss: {total_loss / len(loader.dataset):.4f}")
