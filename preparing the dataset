@@ -1,0 +1,13 @@
+dataset/
+│
+├── train/
+│   ├── healthy/
+│   ├── fault1/
+│   ├── fault2/
+│   └── ...
+│
+└── test/
+    ├── healthy/
+    ├── fault1/
+    ├── fault2/
+    └── ...
