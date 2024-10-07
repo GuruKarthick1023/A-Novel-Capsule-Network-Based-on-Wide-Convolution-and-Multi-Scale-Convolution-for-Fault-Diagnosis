@@ -1,0 +1,27 @@
+class WideMultiScaleCapsuleNet(nn.Module):
+    def __init__(self, num_classes=10):
+        super(WideMultiScaleCapsuleNet, self).__init__()
+        self.conv1 = WideMultiScaleConv(in_channels=1, out_channels=256)  # Adjust in_channels based on dataset
+        self.primary_capsules = CapsuleLayer(num_capsules=8, num_route_nodes=-1, in_channels=256*4, out_channels=32, kernel_size=9, stride=2)
+        self.digit_capsules = CapsuleLayer(num_capsules=num_classes, num_route_nodes=32 * 6 * 6, in_channels=8, out_channels=16)
+        self.decoder = nn.Sequential(
+            nn.Linear(16*num_classes, 512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, 1024),
+            nn.ReLU(inplace=True),
+            nn.Linear(1024, 1),  # Adjust output size based on fault diagnosis requirement
+            nn.Sigmoid()
+        )
+
+    def forward(self, x, y=None):
+        x = self.conv1(x)
+        x = self.primary_capsules(x)
+        x = self.digit_capsules(x)
+        
+        if y is None:
+            # During inference, use the capsule with the highest length
+            _, max_length_indices = x.norm(dim=-1).max(dim=1)
+            y = torch.eye(x.size(1)).to(x.device).index_select(dim=0, index=max_length_indices)
+        
+        recon = self.decoder((x * y[:, :, None]).view(x.size(0), -1))
+        return x, recon
