@@ -1,0 +1,25 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class WideMultiScaleConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(WideMultiScaleConv, self).__init__()
+        # Wide Convolution: Larger kernel size
+        self.wide_conv = nn.Conv1d(in_channels, out_channels, kernel_size=11, padding=5)  # Example kernel size
+
+        # Multi-Scale Convolutions: Different kernel sizes
+        self.multi_scale_conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.multi_scale_conv2 = nn.Conv1d(in_channels, out_channels, kernel_size=5, padding=2)
+        self.multi_scale_conv3 = nn.Conv1d(in_channels, out_channels, kernel_size=7, padding=3)
+
+    def forward(self, x):
+        wide = F.relu(self.wide_conv(x))
+        
+        ms1 = F.relu(self.multi_scale_conv1(x))
+        ms2 = F.relu(self.multi_scale_conv2(x))
+        ms3 = F.relu(self.multi_scale_conv3(x))
+        
+        # Concatenate along the channel dimension
+        out = torch.cat([wide, ms1, ms2, ms3], dim=1)
+        return out
